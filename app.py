@@ -2,16 +2,26 @@ import os
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.document_loaders import PyPDFLoader
-from langchain.llms import HuggingFacePipeline
+#from langchain.embeddings import HuggingFaceEmbeddings
+#from langchain.vectorstores import Chroma
+#from langchain.document_loaders import PyPDFLoader
+#from langchain.llms import HuggingFacePipeline
+from langchain_community.llms import HuggingFacePipeline
 from langchain.memory import ConversationBufferMemory
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+# Replace the deprecated imports with the new ones
 
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.text_splitters import CharacterTextSplitter
 app = FastAPI()
+# Load the .env file
 
+# Get the token from the .env file
+hf_token = os.getenv("HF_TOKEN")
 # Global variable for the Q&A system
 qa_system = None
 
@@ -30,7 +40,7 @@ def setup_vectorstore(documents):
 # Step 3: Load Llama 2 model
 def load_llama_model():
     MODEL_NAME = "meta-llama/Llama-2-7b-hf"
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=True)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=hf_token)
     model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
     pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_length=512, temperature=0)
     llm = HuggingFacePipeline(pipeline=pipe)
