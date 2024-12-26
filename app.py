@@ -1,96 +1,105 @@
-import os
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
-from langchain.chains import ConversationalRetrievalChain
-#from langchain.embeddings import HuggingFaceEmbeddings
-#from langchain.vectorstores import Chroma
-#from langchain.document_loaders import PyPDFLoader
-#from langchain.llms import HuggingFacePipeline
-from langchain_community.llms import HuggingFacePipeline
-from langchain.memory import ConversationBufferMemory
-from langchain.retrievers.multi_vector import MultiVectorRetriever
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-# Replace the deprecated imports with the new ones
+import os
+import re
+from langchain.document_loaders import UnstructuredPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain_community.embeddings.ollama import OllamaEmbeddings
+from langchain.llms import Ollama
+from typing import List
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.text_splitters import CharacterTextSplitter
 app = FastAPI()
-# Load the .env file
 
-# Get the token from the .env file
-hf_token = os.getenv("HF_TOKEN")
-# Global variable for the Q&A system
-qa_system = None
+# Ollama server details
+OLLAMA_URL = "http://127.0.0.1:12345"
+embedding_model = OllamaEmbeddings(base_url=OLLAMA_URL, model="nomic-embed-text:latest")
+ollama_llm = Ollama(model="llama3:latest", base_url=OLLAMA_URL)
 
-# Step 1: Load and chunk PDF
-def load_and_chunk_pdf(file_path, chunk_size=1000, overlap=200):
-    loader = PyPDFLoader(file_path)
-    documents = loader.load_and_split(chunk_size=chunk_size, overlap=overlap)
-    return documents
+# Directory for saving uploaded files and Chroma DB
+UPLOAD_DIR = "uploaded_files"
+CHROMA_DIR = "chroma_db"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(CHROMA_DIR, exist_ok=True)
 
-# Step 2: Create embeddings and vectorstore
-def setup_vectorstore(documents):
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vectorstore = Chroma.from_documents(documents, embedding=embeddings)
-    return vectorstore
+# Initialize Chroma DB
+chroma_db = None
 
-# Step 3: Load Llama 2 model
-def load_llama_model():
-    MODEL_NAME = "meta-llama/Llama-2-7b-hf"
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=hf_token)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
-    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_length=512, temperature=0)
-    llm = HuggingFacePipeline(pipeline=pipe)
-    return llm
+def load_to_chroma(file_path: str):
+    """Load PDF content, clean it, split it, and embed it in Chroma DB."""
+    global chroma_db
 
-# Step 4: Setup MultiVectorRetriever
-def setup_multi_retriever(vectorstore):
-    retriever = MultiVectorRetriever(vectorstore=vectorstore)
-    return retriever
+    # Load PDF document
+    loader = UnstructuredPDFLoader(file_path)
+    documents = loader.load()
 
-# Step 5: Setup Q&A system with memory
-def setup_qa_system(retriever, llm):
-    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-    qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
-    return qa_chain
+    # Clean the document text
+    text_without_newlines = []
+    for document in documents:
+        text = document.page_content
+        cleaned_text = re.sub(r'\n+', ' ', text)
+        text_without_newlines.append(cleaned_text)
 
-# FastAPI endpoint for uploading a PDF
-@app.post("/upload/")
-async def upload_pdf(file: UploadFile = File(...)):
-    global qa_system
+    # Split text into chunks with overlap
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=100
+    )
+    chunks = text_splitter.split_text(" ".join(text_without_newlines))
+
+    # Generate embeddings and save to Chroma DB
+    chroma_db = Chroma.from_texts(chunks, embedding_model, persist_directory=CHROMA_DIR)
+    chroma_db.persist()
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """Endpoint to upload a PDF file and process it."""
     if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
-    
-    file_path = os.path.join("uploads", file.filename)
-    os.makedirs("uploads", exist_ok=True)
-    
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as f:
         f.write(await file.read())
 
-    # Process the PDF
-    documents = load_and_chunk_pdf(file_path)
-    vectorstore = setup_vectorstore(documents)
-    llm = load_llama_model()
-    retriever = setup_multi_retriever(vectorstore)
-    qa_system = setup_qa_system(retriever, llm)
+    try:
+        load_to_chroma(file_path)
+        return {"message": "File uploaded and processed successfully!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {e}")
 
-    return JSONResponse({"message": "PDF uploaded and processed successfully."})
+@app.post("/chat")
+async def chat_with_file(query: str):
+    """Endpoint to query the uploaded PDF file and get a response."""
+    global chroma_db
+    if chroma_db is None:
+        raise HTTPException(status_code=400, detail="No file has been uploaded yet.")
 
-# FastAPI endpoint for chatting with the system
-@app.post("/chat/")
-async def chat(query: str):
-    global qa_system
-    if not qa_system:
-        raise HTTPException(status_code=400, detail="No PDF has been uploaded. Please upload a PDF first.")
-    if not query:
-        raise HTTPException(status_code=400, detail="Query cannot be empty.")
-    
-    response = qa_system({"question": query})
-    return JSONResponse({"response": response["answer"]})
+    try:
+        # Query Chroma DB
+        query_embedding = embedding_model.embed_query(query)
+        results = chroma_db.similarity_search_by_vector(query_embedding, k=3)
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+        if not results:
+            return {"message": "No relevant results found."}
+
+        # Combine retrieved text for the prompt
+        retrieved_text = " ".join([result.page_content for result in results])
+
+        # Prepare the prompt template
+        prompt_template = f"""
+        You are a helpful assistant. Using the following retrieved context and user query, generate an informative response  based on the query.
+
+        Context:
+        {retrieved_text}
+
+        Query:
+        {query}
+
+        Please keep the response concise ,short and relevant.
+        """
+
+        # Generate response using Llama 3
+        response = ollama_llm(prompt_template)
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error during query: {e}")
