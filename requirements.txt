@@ -1,1 +1,9 @@
-ÿþ
+fastapi
+uvicorn
+langchain
+langchain-community
+chromadb
+unstructured[all]
+python-multipart
+pdfminer.six
+unstructured[all-docs]
