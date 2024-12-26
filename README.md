@@ -1,6 +1,6 @@
-# Local RAG System: Chat with Your PDFs (Using Ollama, LaMDA, and LangChain)
+# DataMate: Chat with Your PDFs (Using Ollama, LaMDA, and LangChain)
 
-Welcome to your personal PDF interaction powerhouse! This project lets you upload PDF documents and engage in conversational search using powerful language models (LLMs). It leverages Ollama and LaMDA (LLM3) for advanced natural language processing (NLP), and uses LangChain as the framework.
+Welcome to DataMate, your personal PDF interaction powerhouse! This project lets you upload PDF documents and engage in conversational search using powerful language models (LLMs). It leverages Ollama and LaMDA (LLM3) for advanced natural language processing (NLP), and uses LangChain as the framework.
 
 ## Key Features
 
