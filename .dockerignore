@@ -1,0 +1,9 @@
+.env
+__pycache__
+uploads
+.ipynb_checkpoints
+chroma_db*
+uploaded_files
+DataMate_jupiter_version.ipynb
+try_and_error_01.ipynb
+try_and_error_02.ipynb
