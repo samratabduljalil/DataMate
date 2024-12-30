@@ -29,9 +29,10 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
 
 ### Prerequisites
 
-*   **Python:** Ensure you have Python 3.x installed (`python --version`).
+*   **Python:** Ensure you have Python 3.10 installed (`python --version`).
 *   **Git:** You'll need Git to clone the repository. Download it from [https://git-scm.com/](https://git-scm.com/).
 *   **Ollama:** Install and set up Ollama. See the Ollama documentation for instructions. Make sure to download the llama3 model if you intend to use it.
+*   
 ## Docker
 1.  **To pull the image from DockerHub for DataMate, you can use the following docker command:**
 
