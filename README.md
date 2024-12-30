@@ -39,14 +39,18 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
     ```bash
     docker pull samratabduljalil/datamate
     ```
-
+2. **To run the image  DataMate, you can use the following docker command:**
+       ```bash
+    docker run -p 8000:8000 samratabduljalil/datamate
+    ```
+   
 ### Installation
 
 1.  **Clone the Repository:**
 
     ```bash
-    git clone <your_repository_url>.git
-    cd <repository_name>
+    git clone https://github.com/samratabduljalil/DataMate
+    cd DataMate
     ```
 
 2.  **Install Dependencies:**
@@ -55,7 +59,16 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
     pip install -r requirements.txt
     ```
 
-    This will install the necessary Python libraries, including `langchain`, `chromadb`, `nomic-embed-text`, and others.
+    This will install the necessary Python libraries, including `langchain`, `chromadb`,  and others.
+
+3.  **Run FastAPI App:**
+
+    ```bash
+    uvicorn app:app --reload
+    ```
+
+    
+    
 
 ### Configuration (Ollama)
 
