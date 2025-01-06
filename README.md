@@ -40,9 +40,9 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
     docker pull samratabduljalil/datamate
     ```
 2. **To run the image  DataMate, you can use the following docker command:**
-       ```bash
-       docker run -p 8000:8000 samratabduljalil/datamate
-       ```
+   ```bash
+   docker run -p 8000:8000 samratabduljalil/datamate
+   ```
    
 ### Installation
 
