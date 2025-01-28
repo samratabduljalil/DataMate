@@ -75,4 +75,4 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
 Before starting the application, ensure Ollama is running and accessible. If your Ollama server is running on a non-default host/port (other than `127.0.0.1:11434`), you *must* set the `OLLAMA_HOST` environment variable:
 
 ```bash
-set OLLAMA_HOST=127.0.0.1:12345 # Example: If Ollama runs on port 12345
+set OLLAMA_HOST=127.0.0.1:12345
