@@ -87,7 +87,7 @@ async def chat_with_file(query: str):
 
         # Prepare the prompt template
         prompt_template = f"""
-        You are a helpful assistant. Using the following retrieved context and user query, generate an informative response  based on the query.
+        You are a helpful assistant. Using the following retrieved context and user query, generate an informative response  based on the query.And remember if you donot find any result related to document please just tell that "Not Found".
 
         Context:
         {retrieved_text}
@@ -95,7 +95,7 @@ async def chat_with_file(query: str):
         Query:
         {query}
 
-        Please keep the response concise ,short and relevant.
+        Please keep the response concise ,short and relevant.if you donot find any result related to document please just tell that "Not Found".
         """
 
         # Generate response using Llama 3
