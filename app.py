@@ -67,8 +67,14 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {e}")
 
+from pydantic import BaseModel
+
+class QueryRequest(BaseModel):
+    query: str
+
 @app.post("/chat")
-async def chat_with_file(query: str):
+async def chat_with_file(request: QueryRequest):
+    query = request.query
     """Endpoint to query the uploaded PDF file and get a response."""
     global chroma_db
     if chroma_db is None:
