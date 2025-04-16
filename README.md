@@ -19,7 +19,8 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
 *   **Embedding Model:** `nomic-embed-text`
 *   **Vector Database:** ChromaDB
 *   **Runtime Environment:** Python
-*   **Web Framework (Optional):** FastAPI
+*   **Web Framework :** FastAPI
+*   **Fronend Web Framework :** Streamlit
 *   **Interactive Development (Optional):** Jupyter Notebook
 
 
@@ -66,7 +67,11 @@ Welcome to DataMate, your personal PDF interaction powerhouse! This project lets
     ```bash
     uvicorn app:app --reload
     ```
+4.  **Run Streamlit App:**
 
+    ```bash
+    streamlit run  frontend.py
+    ```
     
     
 
@@ -76,3 +81,4 @@ Before starting the application, ensure Ollama is running and accessible. If you
 
 ```bash
 set OLLAMA_HOST=127.0.0.1:12345
+Ollama serve
